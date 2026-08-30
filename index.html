@@ -1,1 +1,485 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width,initial-scale=1.0"> <title>Nyan Shop</title> <style> *{ box-sizing:border-box; margin:0; padding:0; } body{ font-family:Arial,sans-serif; background:#f4f7fb; color:#222; transition:.25s; } body.dark{ background:#111827; color:#fff; } header{ background:linear-gradient(135deg,#7c3aed,#06b6d4); color:white; text-align:center; padding:28px 15px; } header h1{ font-size:40px; margin-bottom:8px; } header p{ font-size:16px; } nav{ display:flex; justify-content:center; flex-wrap:wrap; gap:8px; padding:12px; background:white; box-shadow:0 2px 10px #0001; position:sticky; top:0; z-index:20; } .dark nav{ background:#1f2937; } button{ border:0; border-radius:10px; padding:11px 15px; cursor:pointer; font-weight:bold; color:white; background:#7c3aed; } button:hover{ opacity:.88; transform:translateY(-1px); } .secondary{ background:#475569; } .green{ background:#16a34a; } .red{ background:#dc2626; } .pink{ background:#ec4899; } .controls{ max-width:1100px; margin:20px auto 10px; padding:0 15px; display:flex; gap:10px; flex-wrap:wrap; } input,select{ border:1px solid #cbd5e1; border-radius:10px; padding:11px; font-size:15px; background:white; } input{ flex:1; min-width:220px; } .dark input, .dark select{ background:#1f2937; color:white; border-color:#475569; } .shop{ max-width:1100px; margin:auto; padding:15px 15px 50px; } .topbar{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin:10px 0 18px; } .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; } .card{ background:white; border-radius:16px; overflow:hidden; box-shadow:0 5px 20px #0001; transition:.2s; } .dark .card{ background:#1f2937; } .card:hover{ transform:translateY(-4px); } .card img{ width:100%; height:190px; object-fit:cover; display:block; background:#e5e7eb; } .info{ padding:14px; } .info h3{ margin-bottom:8px; } .category{ display:inline-block; padding:4px 8px; border-radius:20px; background:#e0e7ff; color:#4338ca; font-size:12px; margin-bottom:8px; } .free{ background:#16a34a; color:white; padding:4px 8px; border-radius:20px; font-size:12px; } .paid{ background:#f59e0b; color:white; padding:4px 8px; border-radius:20px; font-size:12px; } .actions{ display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:12px; } .actions button:last-child{ grid-column:span 2; } .featured{ border:2px solid #7c3aed; } .empty{ text-align:center; padding:50px 15px; font-size:20px; } footer{ text-align:center; background:#111827; color:white; padding:25px; } .modal{ display:none; position:fixed; inset:0; z-index:100; background:#000b; align-items:center; justify-content:center; padding:15px; } .modal-box{ background:white; color:#222; width:min(900px,100%); max-height:90vh; overflow:auto; border-radius:18px; padding:20px; position:relative; } .dark .modal-box{ background:#1f2937; color:white; } .close{ position:absolute; right:15px; top:8px; font-size:30px; cursor:pointer; } .preview-img{ width:100%; max-height:65vh; object-fit:contain; border-radius:12px; margin:15px 0; } .owner-grid{ display:grid; gap:10px; } .owner-grid input, .owner-grid select{ width:100%; } .owner-products{ margin-top:20px; display:grid; gap:8px; } .owner-item{ display:flex; justify-content:space-between; align-items:center; gap:10px; padding:10px; border-radius:10px; background:#f1f5f9; } .dark .owner-item{ background:#374151; } .cart-item{ display:flex; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid #ddd; } .notice{ padding:12px; border-radius:10px; background:#fef3c7; margin-bottom:12px; color:#78350f; } @media(max-width:600px){ header h1{ font-size:30px; } nav button{ font-size:13px; padding:9px; } input{ width:100%; } .card img{ height:165px; } } </style> </head> <body> <header> <h1>🌈 Nyan Shop</h1> <p>Beautiful backgrounds for everyone</p> </header> <nav> <button onclick="goHome()">🏠 Home</button> <button onclick="showFavorites()"> ❤️ Favorites <span id="favCount">0</span> </button> <button onclick="showCart()"> 🛒 Cart <span id="cartCount">0</span> </button> <button onclick="openOwner()">🔐 Owner</button> <button class="secondary" onclick="toggleDark()"> 🌙 Theme </button> </nav> <section class="controls"> <input id="search" type="text" placeholder="🔎 Search backgrounds..." oninput="renderProducts()" > <select id="category" onchange="renderProducts()"> <option value="all">All Categories</option> <option value="anime">Anime</option> <option value="nature">Nature</option> <option value="space">Space</option> <option value="gaming">Gaming</option> <option value="other">Other</option> </select> <button onclick="showFeatured()"> ⭐ Featured </button> </section> <main class="shop"> <div class="topbar"> <h2 id="pageTitle">🖼️ Backgrounds</h2> <strong> <span id="resultCount">0</span> items </strong> </div> <div id="productGrid" class="grid"></div> </main> <footer> <p>© 2026 Nyan Shop</p> <p>Free backgrounds ❤️</p> </footer> <!-- PREVIEW --> <div id="previewModal" class="modal"> <div class="modal-box"> <span class="close" onclick="closeModal('previewModal')">×</span> <h2 id="previewName"></h2> <img id="previewImage" class="preview-img"> <p id="previewInfo"></p> <br> <button class="green" onclick="downloadCurrent()"> ⬇️ DOWNLOAD </button> </div> </div> <!-- CART --> <div id="cartModal" class="modal"> <div class="modal-box"> <span class="close" onclick="closeModal('cartModal')">×</span> <h2>🛒 Your Cart</h2> <br> <div id="cartList"></div> <br> <h3> Total: $<span id="cartTotal">0.00</span> </h3> </div> </div> <!-- OWNER LOGIN --> <div id="ownerLoginModal" class="modal"> <div class="modal-box"> <span class="close" onclick="closeModal('ownerLoginModal')">×</span> <h2>🔐 Owner Login</h2> <br> <div class="notice"> Owner panel for managing your local shop. </div> <input id="ownerPassword" type="password" placeholder="Owner password" > <br><br> <button onclick="ownerLogin()"> Enter Owner Page </button> <p id="loginMessage"></p> </div> </div> <!-- OWNER --> <div id="ownerModal" class="modal"> <div class="modal-box"> <span class="close" onclick="closeModal('ownerModal')">×</span> <h2>👑 Nyan Shop Owner</h2> <br> <div class="notice"> Add your image path after uploading the image to your GitHub repository. Example: images/cat.jpg </div> <h3>➕ Add Background</h3> <br> <div class="owner-grid"> <input id="newName" placeholder="Background name" > <select id="newCategory"> <option value="anime">Anime</option> <option value="nature">Nature</option> <option value="space">Space</option> <option value="gaming">Gaming</option> <option value="other">Other</option> </select> <input id="newImage" placeholder="images/myphoto.jpg" > <select id="newType"> <option value="free">FREE</option> <option value="paid">PAID</option> </select> <input id="newPrice" type="number" min="0" step="0.01" placeholder="Price" > <button class="green" onclick="addProduct()"> ➕ Add Background </button> </div> <br> <h3>📦 Products</h3> <div id="ownerProducts" class="owner-products"></div> <br> <button class="red" onclick="resetProducts()"> ♻️ Reset Products </button> </div> </div> <script> /* ========================================= BACKGROUNDS ========================================= */ const defaultProducts = [ { id:1, name:"Anime Sky", category:"anime", image:"images/anime1.jpg", type:"free", price:0, featured:true }, { id:2, name:"Beautiful Nature", category:"nature", image:"images/nature1.jpg", type:"free", price:0, featured:true }, { id:3, name:"Galaxy Space", category:"space", image:"images/space1.jpg", type:"free", price:0, featured:false }, { id:4, name:"Gaming Setup", category:"gaming", image:"images/gaming1.jpg", type:"free", price:0, featured:true } ]; /* LOAD PRODUCTS */ let products = JSON.parse( localStorage.getItem("nyanProducts") ); if(!products){ products = defaultProducts; saveProducts(); } /* FAVORITES */ let favorites = JSON.parse( localStorage.getItem("nyanFavorites") ) || []; /* CART */ let cart = JSON.parse( localStorage.getItem("nyanCart") ) || []; /* CURRENT PREVIEW */ let currentProduct = null; /* SAVE FUNCTIONS */ function saveProducts(){ localStorage.setItem( "nyanProducts", JSON.stringify(products) ); } function saveFavorites(){ localStorage.setItem( "nyanFavorites", JSON.stringify(favorites) ); } function saveCart(){ localStorage.setItem( "nyanCart", JSON.stringify(cart) ); } /* HOME */ function goHome(){ document.getElementById("search").value=""; document.getElementById("category").value="all"; document.getElementById("pageTitle") .textContent="🖼️ Backgrounds"; renderProducts(); } /* DISPLAY */ function renderProducts(list=null){ const grid = document.getElementById("productGrid"); const search = document.getElementById("search") .value .toLowerCase(); const category = document.getElementById("category").value; if(!list){ list = products.filter(product => { const searchOK = product.name .toLowerCase() .includes(search); const categoryOK = category==="all" || product.category===category; return searchOK && categoryOK; }); } grid.innerHTML=""; document.getElementById("resultCount") .textContent=list.length; if(list.length===0){ grid.innerHTML = '<div class="empty">😢 Nothing found.</div>'; updateCounts(); return; } list.forEach(product => { const favorite = favorites.includes(product.id); const card = document.createElement("article"); card.className = "card" + (product.featured ? " featured" : ""); const price = product.type==="free" ? '<span class="free">FREE</span>' : '<span class="paid">💰 $' + Number(product.price).toFixed(2) + '</span>'; card.innerHTML=` <img src="${escapeHTML(product.image)}" alt="${escapeHTML(product.name)}" loading="lazy" onerror="imageError(this)" > <div class="info"> <h3>${escapeHTML(product.name)}</h3> <span class="category"> ${escapeHTML(product.category)} </span> ${price} <div class="actions"> <button onclick="previewProduct(${product.id})"> 👁️ Preview </button> <button class="pink" onclick="toggleFavorite(${product.id})"> ${favorite ? "💖 Saved" : "🤍 Favorite"} </button> <button class="green" onclick="downloadProduct(${product.id})"> ⬇️ Download </button> <button class="secondary" onclick="addToCart(${product.id})"> 🛒 Add to Cart </button> </div> </div> `; grid.appendChild(card); }); updateCounts(); } /* IMAGE ERROR */ function imageError(img){ img.alt="Image not found"; img.style.opacity="0.5"; } /* SAFE TEXT */ function escapeHTML(text){ return String(text) .replaceAll("&","&amp;") .replaceAll("<","&lt;") .replaceAll(">","&gt;") .replaceAll('"',"&quot;") .replaceAll("'","&#039;"); } /* FAVORITES */ function toggleFavorite(id){ if(favorites.includes(id)){ favorites = favorites.filter(x => x!==id); }else{ favorites.push(id); } saveFavorites(); renderProducts(); } /* SHOW FAVORITES */ function showFavorites(){ document.getElementById("pageTitle") .textContent="❤️ My Favorites"; const list = products.filter( p => favorites.includes(p.id) ); renderProducts(list); } /* FEATURED */ function showFeatured(){ document.getElementById("pageTitle") .textContent="⭐ Featured"; const list = products.filter(p => p.featured); renderProducts(list); } /* PREVIEW */ function previewProduct(id){ const product = products.find(p => p.id===id); if(!product)return; currentProduct=product; document.getElementById("previewName") .textContent=product.name; document.getElementById("previewImage") .src=product.image; document.getElementById("previewInfo") .textContent = product.type==="free" ? "🆓 Free background" : "💰 Price: $" + Number(product.price).toFixed(2); document.getElementById("previewModal") .style.display="flex"; } /* ========================================= BEST DOWNLOAD FUNCTION ========================================= */ async function downloadProduct(id){ const product = products.find(p => p.id===id); if(!product)return; /* PAID ITEMS */ if(product.type==="paid"){ alert( "💰 This background is paid. " + "Payment can be added later." ); return; } try{ /* Fetch the image from your GitHub Pages site. Then turn it into a downloadable file. */ const response = await fetch(product.image); if(!response.ok){ throw new Error( "Image could not be loaded." ); } const blob = await response.blob(); const blobURL = URL.createObjectURL(blob); const extension = getExtension(product.image); const filename = cleanFilename(product.name) + extension; const link = document.createElement("a"); link.href=blobURL; link.download=filename; link.style.display="none"; document.body.appendChild(link); link.click(); link.remove(); setTimeout( () => URL.revokeObjectURL(blobURL), 1000 ); }catch(error){ /* If the browser blocks the direct download, open the image so the visitor can save it. */ alert( "Download was blocked by the browser. " + "The image will open so you can save it." ); window.open( product.image, "_blank" ); } } /* GET FILE EXTENSION */ function getExtension(path){ const clean = path.split("?")[0]; const match = clean.match(/\.[a-zA-Z0-9]+$/); return match ? match[0] : ".jpg"; } /* CLEAN DOWNLOAD NAME */ function cleanFilename(name){ return name .trim() .replace(/[^a-zA-Z0-9]+/g,"-") .replace(/^-+|-+$/g,"") .toLowerCase(); } /* DOWNLOAD FROM PREVIEW */ function downloadCurrent(){ if(currentProduct){ downloadProduct( currentProduct.id ); } } /* CART */ function addToCart(id){ if(!cart.includes(id)){ cart.push(id); saveCart(); } updateCounts(); } function removeFromCart(id){ cart = cart.filter(x => x!==id); saveCart(); showCart(); } function showCart(){ const list = document.getElementById("cartList"); list.innerHTML=""; let total=0; if(cart.length===0){ list.innerHTML= "<p>Your cart is empty.</p>"; }else{ cart.forEach(id => { const product = products.find(p => p.id===id); if(!product)return; total += Number(product.price)||0; const item = document.createElement("div"); item.className="cart-item"; item.innerHTML=` <span> ${escapeHTML(product.name)} </span> <button class="red" onclick="removeFromCart(${product.id})"> Remove </button> `; list.appendChild(item); }); } document.getElementById("cartTotal") .textContent=total.toFixed(2); document.getElementById("cartModal") .style.display="flex"; } /* COUNTS */ function updateCounts(){ document.getElementById("favCount") .textContent=favorites.length; document.getElementById("cartCount") .textContent=cart.length; } /* OWNER */ function openOwner(){ document.getElementById("ownerLoginModal") .style.display="flex"; } /* DEMO OWNER PASSWORD Change this if you want. IMPORTANT: A password inside frontend JavaScript is NOT real security. */ const OWNER_PASSWORD="5124"; function ownerLogin(){ const entered = document.getElementById("ownerPassword") .value; if(entered===OWNER_PASSWORD){ document.getElementById("ownerPassword") .value=""; document.getElementById("loginMessage") .textContent=""; closeModal("ownerLoginModal"); document.getElementById("ownerModal") .style.display="flex"; renderOwnerProducts(); }else{ document.getElementById("loginMessage") .textContent="❌ Wrong password."; } } /* ADD PRODUCT */ function addProduct(){ const name = document.getElementById("newName") .value.trim(); const category = document.getElementById("newCategory") .value; const image = document.getElementById("newImage") .value.trim(); const type = document.getElementById("newType") .value; const price = Number( document.getElementById("newPrice") .value )||0; if(!name || !image){ alert( "Please enter a name and image path." ); return; } const product={ id:Date.now(), name:name, category:category, image:image, type:type, price: type==="paid" ? price : 0, featured:false }; products.push(product); saveProducts(); document.getElementById("newName") .value=""; document.getElementById("newImage") .value=""; document.getElementById("newPrice") .value=""; renderOwnerProducts(); renderProducts(); alert( "✅ Background added!" ); } /* OWNER PRODUCTS */ function renderOwnerProducts(){ const box = document.getElementById("ownerProducts"); box.innerHTML=""; products.forEach(product => { const item = document.createElement("div"); item.className="owner-item"; item.innerHTML=` <span> <strong> ${escapeHTML(product.name)} </strong> <br> ${product.type.toUpperCase()} </span> <button class="red" onclick="deleteProduct(${product.id})"> 🗑️ Delete </button> `; box.appendChild(item); }); } /* DELETE */ function deleteProduct(id){ const product = products.find(p => p.id===id); if(!product)return; if( !confirm( "Delete " + product.name + "?" ) )return; products = products.filter( p => p.id!==id ); favorites = favorites.filter( x => x!==id ); cart = cart.filter( x => x!==id ); saveProducts(); saveFavorites(); saveCart(); renderOwnerProducts(); renderProducts(); updateCounts(); } /* RESET */ function resetProducts(){ if( !confirm( "Reset products to the original list?" ) )return; products = JSON.parse( JSON.stringify(defaultProducts) ); saveProducts(); renderOwnerProducts(); renderProducts(); } /* DARK MODE */ function toggleDark(){ document.body.classList.toggle("dark"); localStorage.setItem( "nyanDark", document.body.classList.contains("dark") ); } if( localStorage.getItem("nyanDark")==="true" ){ document.body.classList.add("dark"); } /* CLOSE MODAL */ function closeModal(id){ document.getElementById(id) .style.display="none"; } /* CLICK OUTSIDE */ window.onclick=function(event){ if( event.target.classList.contains("modal") ){ event.target.style.display="none"; } }; /* START */ renderProducts(); updateCounts(); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#7c4dff">
+<meta name="description" content="Nyan Shop - Backgrounds">
+<link rel="manifest" href="manifest.json">
+<title>Nyan Shop</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#eef6ff;
+  color:#222;
+  transition:.2s;
+}
+body.dark{background:#15151d;color:#eee}
+header{
+  padding:18px;
+  text-align:center;
+  background:linear-gradient(135deg,#7c4dff,#42a5f5);
+  color:white;
+}
+h1{margin:5px;font-size:32px}
+header p{margin:5px}
+nav{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
+  padding:12px;
+}
+button{
+  border:0;
+  border-radius:10px;
+  padding:10px 14px;
+  cursor:pointer;
+  font-weight:bold;
+  background:#7c4dff;
+  color:white;
+}
+button:hover{opacity:.85}
+.search{
+  display:flex;
+  max-width:700px;
+  margin:10px auto 20px;
+  padding:0 10px;
+}
+.search input{
+  flex:1;
+  padding:13px;
+  border:2px solid #ddd;
+  border-radius:10px 0 0 10px;
+  font-size:16px;
+}
+.search button{border-radius:0 10px 10px 0}
+#products{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:16px;
+  padding:16px;
+  max-width:1200px;
+  margin:auto;
+}
+.card{
+  background:white;
+  border-radius:15px;
+  padding:12px;
+  box-shadow:0 4px 15px #0002;
+  transition:.2s;
+}
+.dark .card{background:#24242f}
+.card:hover{transform:translateY(-4px)}
+.card img{
+  width:100%;
+  height:180px;
+  object-fit:cover;
+  border-radius:11px;
+  background:#ddd;
+}
+.card h3{margin:10px 0 5px}
+.price{
+  font-size:19px;
+  font-weight:bold;
+  color:#7c4dff;
+}
+.actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.actions button{flex:1}
+.fav{background:#e91e63}
+.download{background:#2196f3}
+.details{background:#607d8b}
+#cart,#favorites,#owner{
+  max-width:900px;
+  margin:20px auto;
+  padding:18px;
+  background:white;
+  border-radius:15px;
+  box-shadow:0 4px 15px #0002;
+}
+.dark #cart,.dark #favorites,.dark #owner{background:#24242f}
+.hidden{display:none}
+footer{
+  text-align:center;
+  padding:25px;
+  margin-top:30px;
+}
+input,textarea{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #bbb;
+}
+.owner-form{
+  display:grid;
+  gap:8px;
+}
+.owner-form input,.owner-form textarea{width:100%}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🐱 Nyan Shop</h1>
+  <p>Beautiful backgrounds for your device</p>
+</header>
+
+<nav>
+  <button onclick="showHome()">🏠 Home</button>
+  <button onclick="showFavorites()">❤️ Favorites</button>
+  <button onclick="showCart()">🛒 Cart (<span id="cartCount">0</span>)</button>
+  <button onclick="toggleDark()">🌙 Dark Mode</button>
+  <button onclick="ownerLogin()">🔐 Owner</button>
+</nav>
+
+<div class="search">
+  <input id="searchInput" placeholder="Search backgrounds...">
+  <button onclick="searchProducts()">Search</button>
+</div>
+
+<main id="products"></main>
+
+<section id="favorites" class="hidden">
+  <h2>❤️ Favorites</h2>
+  <div id="favoriteList"></div>
+</section>
+
+<section id="cart" class="hidden">
+  <h2>🛒 Your Cart</h2>
+  <div id="cartList"></div>
+  <h3 id="cartTotal"></h3>
+</section>
+
+<section id="owner" class="hidden">
+  <h2>🔐 Owner Page</h2>
+
+  <div id="ownerLoginBox">
+    <input id="ownerCode" type="password" placeholder="Owner code">
+    <button onclick="checkOwner()">Enter</button>
+  </div>
+
+  <div id="ownerPanel" class="hidden">
+    <h3>Add a Background</h3>
+
+    <div class="owner-form">
+      <input id="newName" placeholder="Background name">
+      <input id="newPrice" type="number" step="0.01" placeholder="Price">
+      <input id="newImage" placeholder="Image path e.g. images/cat.jpg">
+      <textarea id="newDescription" placeholder="Description"></textarea>
+      <button onclick="addProduct()">➕ Add Background</button>
+    </div>
+
+    <h3>Delete Backgrounds</h3>
+    <div id="deleteList"></div>
+  </div>
+</section>
+
+<footer>
+  © 2026 Nyan Shop 🐱
+</footer>
+
+<script>
+const OWNER_CODE="5124";
+
+let products=JSON.parse(localStorage.getItem("nyanProducts")) || [
+  {
+    id:1,
+    name:"Cute Cat",
+    price:0.20,
+    image:"images/cat.jpg",
+    description:"A cute cat background."
+  },
+  {
+    id:2,
+    name:"Anime Style",
+    price:0.25,
+    image:"images/anime.jpg",
+    description:"Anime-style background."
+  },
+  {
+    id:3,
+    name:"Nature",
+    price:0.20,
+    image:"images/nature.jpg",
+    description:"Beautiful nature background."
+  }
+];
+
+let favorites=JSON.parse(localStorage.getItem("nyanFavorites")) || [];
+let cart=JSON.parse(localStorage.getItem("nyanCart")) || [];
+
+function save(){
+  localStorage.setItem("nyanProducts",JSON.stringify(products));
+  localStorage.setItem("nyanFavorites",JSON.stringify(favorites));
+  localStorage.setItem("nyanCart",JSON.stringify(cart));
+}
+
+function render(list=products){
+  const box=document.getElementById("products");
+  box.innerHTML="";
+
+  if(list.length===0){
+    box.innerHTML="<h2>No backgrounds found 😿</h2>";
+    return;
+  }
+
+  list.forEach(p=>{
+    const isFav=favorites.includes(p.id);
+
+    box.innerHTML+=`
+      <article class="card">
+        <img src="${p.image}" alt="${escapeHTML(p.name)}"
+             onerror="this.onerror=null;this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23ddd%22/><text x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 font-size=%2230%22>Image not found</text></svg>'">
+
+        <h3>${escapeHTML(p.name)}</h3>
+        <div class="price">$${Number(p.price).toFixed(2)}</div>
+
+        <div class="actions">
+          <button onclick="downloadImage(${p.id})" class="download">⬇ Download</button>
+          <button onclick="toggleFavorite(${p.id})" class="fav">
+            ${isFav?"💔 Remove":"❤️ Favorite"}
+          </button>
+          <button onclick="addCart(${p.id})">🛒 Cart</button>
+          <button onclick="details(${p.id})" class="details">ℹ Details</button>
+        </div>
+      </article>
+    `;
+  });
+}
+
+function escapeHTML(text){
+  return String(text)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function downloadImage(id){
+  const p=products.find(x=>x.id===id);
+  if(!p)return;
+
+  const a=document.createElement("a");
+  a.href=p.image;
+  a.download=(p.name.replace(/[^a-z0-9]/gi,"_")||"nyan-background")+".jpg";
+  a.target="_blank";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function toggleFavorite(id){
+  if(favorites.includes(id)){
+    favorites=favorites.filter(x=>x!==id);
+  }else{
+    favorites.push(id);
+  }
+
+  save();
+  render();
+}
+
+function showFavorites(){
+  hideAll();
+  document.getElementById("favorites").classList.remove("hidden");
+
+  const list=document.getElementById("favoriteList");
+  const favProducts=products.filter(p=>favorites.includes(p.id));
+
+  if(!favProducts.length){
+    list.innerHTML="<p>No favorites yet ❤️</p>";
+    return;
+  }
+
+  list.innerHTML=favProducts.map(p=>
+    `<p>❤️ <b>${escapeHTML(p.name)}</b> — $${Number(p.price).toFixed(2)}</p>`
+  ).join("");
+}
+
+function addCart(id){
+  cart.push(id);
+  save();
+  updateCart();
+  alert("Added to cart 🛒");
+}
+
+function updateCart(){
+  document.getElementById("cartCount").textContent=cart.length;
+
+  const list=document.getElementById("cartList");
+
+  if(!cart.length){
+    list.innerHTML="<p>Your cart is empty.</p>";
+    document.getElementById("cartTotal").textContent="";
+    return;
+  }
+
+  let total=0;
+
+  list.innerHTML=cart.map((id,index)=>{
+    const p=products.find(x=>x.id===id);
+    if(!p)return "";
+
+    total+=Number(p.price);
+
+    return `
+      <p>
+        ${escapeHTML(p.name)} — $${Number(p.price).toFixed(2)}
+        <button onclick="removeCart(${index})">Remove</button>
+      </p>
+    `;
+  }).join("");
+
+  document.getElementById("cartTotal").textContent=
+    "Total: $"+total.toFixed(2);
+}
+
+function removeCart(index){
+  cart.splice(index,1);
+  save();
+  updateCart();
+}
+
+function showCart(){
+  hideAll();
+  document.getElementById("cart").classList.remove("hidden");
+  updateCart();
+}
+
+function details(id){
+  const p=products.find(x=>x.id===id);
+  alert(p.name+"\n\n"+p.description+"\n\nPrice: $"+Number(p.price).toFixed(2));
+}
+
+function searchProducts(){
+  const q=document.getElementById("searchInput").value.toLowerCase().trim();
+
+  const result=products.filter(p=>
+    p.name.toLowerCase().includes(q) ||
+    p.description.toLowerCase().includes(q)
+  );
+
+  hideAll();
+  render(result);
+}
+
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem(
+    "nyanDark",
+    document.body.classList.contains("dark")
+  );
+}
+
+function hideAll(){
+  document.getElementById("favorites").classList.add("hidden");
+  document.getElementById("cart").classList.add("hidden");
+  document.getElementById("owner").classList.add("hidden");
+}
+
+function showHome(){
+  hideAll();
+  render();
+}
+
+function ownerLogin(){
+  hideAll();
+  document.getElementById("owner").classList.remove("hidden");
+  document.getElementById("ownerPanel").classList.add("hidden");
+  document.getElementById("ownerLoginBox").classList.remove("hidden");
+}
+
+function checkOwner(){
+  const code=document.getElementById("ownerCode").value;
+
+  if(code===OWNER_CODE){
+    document.getElementById("ownerLoginBox").classList.add("hidden");
+    document.getElementById("ownerPanel").classList.remove("hidden");
+    renderDeleteList();
+  }else{
+    alert("Wrong owner code.");
+  }
+}
+
+function addProduct(){
+  const name=document.getElementById("newName").value.trim();
+  const price=parseFloat(document.getElementById("newPrice").value);
+  const image=document.getElementById("newImage").value.trim();
+  const description=document.getElementById("newDescription").value.trim();
+
+  if(!name || !image || isNaN(price)){
+    alert("Please fill in the name, price and image path.");
+    return;
+  }
+
+  products.push({
+    id:Date.now(),
+    name:name,
+    price:price,
+    image:image,
+    description:description || "Nyan Shop background."
+  });
+
+  save();
+
+  document.getElementById("newName").value="";
+  document.getElementById("newPrice").value="";
+  document.getElementById("newImage").value="";
+  document.getElementById("newDescription").value="";
+
+  renderDeleteList();
+  render();
+
+  alert("Background added!");
+}
+
+function renderDeleteList(){
+  const box=document.getElementById("deleteList");
+
+  box.innerHTML=products.map(p=>`
+    <p>
+      ${escapeHTML(p.name)}
+      <button onclick="deleteProduct(${p.id})">🗑 Delete</button>
+    </p>
+  `).join("");
+}
+
+function deleteProduct(id){
+  if(!confirm("Delete this background?"))return;
+
+  products=products.filter(p=>p.id!==id);
+  favorites=favorites.filter(x=>x!==id);
+  cart=cart.filter(x=>x!==id);
+
+  save();
+  render();
+  renderDeleteList();
+  updateCart();
+}
+
+if(localStorage.getItem("nyanDark")==="true"){
+  document.body.classList.add("dark");
+}
+
+render();
+updateCart();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("service-worker.js")
+      .catch(()=>{});
+  });
+}
+</script>
+
+</body>
+</html>
